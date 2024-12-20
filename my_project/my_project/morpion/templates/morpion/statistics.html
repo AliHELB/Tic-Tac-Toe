@@ -1,0 +1,106 @@
+{% extends "morpion/base.html" %}
+
+{% block content %}
+
+<script>
+    $(document).ready(function () {
+        $('.col-md-4 .content-section').empty();
+        var profileImage = document.createElement("img");
+        profileImage.src = "{{ user.profile.image.url }}";
+        profileImage.alt = "{{ user.username }}";
+        profileImage.className = "img-fluid rounded-circle";
+        profileImage.style.maxWidth = "120px";
+        var usernameParagraph = document.createElement("h3");
+        usernameParagraph.textContent = "{{ user.username }}";
+
+        var profileSection = $('<div class="text-center"></div>');
+        profileSection.append(profileImage);
+        profileSection.append(usernameParagraph);
+
+        // Append the centered profile section to the content section
+        $('.col-md-4 .content-section').append(profileSection);
+    });
+</script>
+
+    <!-- Onglets Bootstrap -->
+    <ul class="nav nav-tabs" id="myTabs">
+        <li class="nav-item">
+            <a class="nav-link active" id="ranking-tab" data-toggle="tab" href="#ranking">Classement</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" id="statistics-tab" data-toggle="tab" href="#statistics">Statistiques</a>
+        </li>
+    </ul>
+
+    <!-- Contenu des onglets -->
+    <div class="tab-content mt-3">
+        <div class="tab-pane fade show active" id="ranking">
+            <form method="post" action="{% url 'statistics' %}">
+                {% csrf_token %}
+                <label for="gridsize">Taille du tableau :</label>
+                <input type="number" name="gridsize" required>
+
+                <label for="alignement">Alignement :</label>
+                <input type="number" name="alignement" required>
+
+                <button type="submit">Calculer le classement</button>
+            </form>
+            {% if ranking_data %}
+                {% if gridsize is not none %}
+                    <h3>Classement actuel pour G{{ gridsize }}A{{ alignement }}</h3>
+                    <ul>
+                        {% for user, points in ranking_data.items %}
+                            <li>{{ user.username }}: {{ points }} points</li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <h3>Aucun classement sélectionné</h3>
+                {% endif %}
+            {% endif %}
+        </div>
+        <div class="tab-pane fade" id="statistics">
+            <canvas id="gamesChart" width="400" height="200"></canvas>
+            <!-- Script Chart.js pour générer le graphique -->
+            <script>
+                $(document).ready(function () {
+                    // Données transmises depuis la vue Django
+                    var days = {{ days|safe }};
+                    var games_played = {{ games_played|safe }};
+
+                    var gamesData = {
+                        labels: days,
+                        datasets: [{
+                            label: "Nombre de parties jouées",
+                            data: games_played,
+                            backgroundColor: "rgba(102, 51, 153, 0.8)",
+                            borderColor: "rgba(102, 51, 153, 1)",
+                            borderWidth: 1
+                        }]
+                    };
+                    var gamesChartCanvas = document.getElementById('gamesChart');
+                    var gamesChart = new Chart(gamesChartCanvas, {
+                        type: 'bar',
+                        data: gamesData,
+                        options: {
+                            scales: {
+                                y: {
+                                    beginAtZero: true
+                                }
+                            }
+                        }
+                    });
+                });
+            </script>
+        </div>
+
+    </div>
+    <script>
+        $(document).ready(function () {
+            // Initialise les onglets Bootstrap
+            $('#myTabs a').on('click', function (e) {
+                e.preventDefault()
+                $(this).tab('show')
+            });
+        });
+    </script>
+{% endblock content %}

@@ -1,0 +1,50 @@
+{% extends "morpion/base.html" %}
+{% block content %}
+<script>
+    $(document).ready(function () {
+        $('.col-md-4 .content-section').empty();
+        var profileImage = document.createElement("img");
+        profileImage.src = "{{ user.profile.image.url }}";
+        profileImage.alt = "{{ user.username }}";
+        profileImage.className = "img-fluid rounded-circle";
+        profileImage.style.maxWidth = "120px";
+        var usernameParagraph = document.createElement("h3");
+        usernameParagraph.textContent = "{{ user.username }}";
+
+        var profileSection = $('<div class="text-center"></div>');
+        profileSection.append(profileImage);
+        profileSection.append(usernameParagraph);
+
+        // Append the centered profile section to the content section
+        $('.col-md-4 .content-section').append(profileSection);
+    });
+</script>
+<div class="media-body">
+    <div class="article-metadata">
+        <h2>{{ object.title }}</h2>
+        <p class="article-title">Créateur de la partie : {{ object.author }}</p>
+        <p class="article-title">Date de création : {{ object.date_posted|date:"F d, Y H:i" }}</p>
+        <p class="article-title">Taille de la grille : {{ object.gridsize }}</p>
+        <p class="article-title">Alignement nécessaire : {{ object.alignement }}</p>
+        {% if not object.public %}
+            <p class="article-title">Partie privée</p>
+        {% else %}
+            <p class="article-title">Partie publique</p>
+        {% endif %}
+        {% if object.author == user %}
+        <div>
+            <a class="btn btn-secondary btn-sm mt-1 mb-1" href="{% url 'game-update' object.id %}">Modifier</a>
+            <a class="btn btn-danger btn-sm mt-1 mb-1" href="{% url 'game-delete' object.id %}">Supprimer</a>
+            {% if not object.public %}
+                <h2 class="article-title">Code d'accès : {{ object.access_code }}</h2>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+    {% if not object.public %}
+        <a href="{% url 'join-private-game' object.id %}" class="btn btn-primary">Rejoindre la partie privée</a>
+    {% else %}
+        <a href="{% url 'join-public-game' object.id %}" class="btn btn-primary">Rejoindre</a>
+    {% endif %}
+</div>
+{% endblock content %}

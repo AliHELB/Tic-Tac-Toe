@@ -1,0 +1,36 @@
+{% extends "morpion/base.html" %}
+{% load crispy_forms_tags %}
+{% block content %}
+<script>
+    $(document).ready(function () {
+        $('.col-md-4 .content-section').empty();
+        var profileImage = document.createElement("img");
+        profileImage.src = "{{ user.profile.image.url }}";
+        profileImage.alt = "{{ user.username }}";
+        profileImage.className = "img-fluid rounded-circle";
+        profileImage.style.maxWidth = "120px";
+        var usernameParagraph = document.createElement("h3");
+        usernameParagraph.textContent = "{{ user.username }}";
+
+        var profileSection = $('<div class="text-center"></div>');
+        profileSection.append(profileImage);
+        profileSection.append(usernameParagraph);
+
+        // Append the centered profile section to the content section
+        $('.col-md-4 .content-section').append(profileSection);
+    });
+</script>
+    <div class="content-section">
+        <form method="POST">
+            {% csrf_token %}
+            <fieldset class="form-group">
+                <legend class="border-bottom mb-4">Paramètres de la partie</legend>
+                {{ form|crispy }}
+            </fieldset>
+            <div class="form-group">
+                <button class="btn btn-outline-info" type="submit">Enregistrer</button>
+            </div>
+        </form>
+        <a href="javascript:history.go(-1)">Annuler</a>
+    </div>
+{% endblock content %}

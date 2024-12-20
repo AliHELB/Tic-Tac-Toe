@@ -1,0 +1,162 @@
+// fonctionnel pour jouer tout seul
+
+{% extends "morpion/base.html" %}
+{% block content %}
+<style>
+    .cell.x {
+        background-color: yellow;
+    }
+
+    .cell.o {
+        background-color: red;
+    }
+    body {
+      font-family: 'Arial', sans-serif;
+      text-align: center;
+    }
+    .board {
+      display: grid;
+      grid-template-columns: repeat({{ object.gridsize }}, 100px);
+      grid-gap: 5px;
+      margin: 20px auto;
+    }
+    .cell {
+      width: 100px;
+      height: 100px;
+      border: 1px solid #ccc;
+      font-size: 2em;
+      cursor: pointer;
+    }
+</style>
+
+<div class="board" id="board"></div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+    // Créer le tableau du jeu
+    const board = document.getElementById('board');
+    const cells = [];
+
+    // Initialiser le tableau avec des cellules vides
+    for (let i = 0; i < {{ object.gridsize }}; i++) {
+      for (let j = 0; j < {{ object.gridsize }}; j++) {
+        const cell = document.createElement('div');
+        cell.classList.add('cell');
+        cell.dataset.row = i;
+        cell.dataset.col = j;
+        cell.addEventListener('click', handleClick);
+        cells.push(cell);
+        board.appendChild(cell);
+      }
+    }
+
+    // Variable pour suivre le tour actuel
+    let currentPlayer = 'X';
+
+    // Fonction pour gérer le clic sur une cellule
+    function handleClick() {
+        if (isGameFinished()) {
+            {{ object.gameover }} = true;
+            alert("La partie est terminée. Démarrez une nouvelle partie.");
+            return;
+        }
+        if (this.textContent === '') {
+        this.textContent = currentPlayer;
+        this.classList.add(currentPlayer.toLowerCase());
+        if (checkWinner()) {
+          alert(`Le joueur ${currentPlayer} a gagné !`);
+        } else if (isBoardFull()) {
+          alert("Match nul !");
+        } else {
+          currentPlayer = (currentPlayer === 'X') ? 'O' : 'X';
+        }
+        } else {
+        alert("Case déjà occupée. Choisissez une autre case.");
+        }
+    }
+
+    // Fonction pour vérifier s'il y a un gagnant
+    function checkWinner() {
+        const winningCombinations = getWinningCombinations();
+
+        return winningCombinations.some(combination => {
+          return combination.every(index => cells[index].textContent === currentPlayer);
+        });
+    }
+    // Fonction pour vérifier si la partie est finie
+    function isGameFinished() {
+        return checkWinner() || isBoardFull();
+    }
+
+  // Fonction pour obtenir toutes les combinaisons gagnantes en fonction de {{ object.alignement }}
+  function getWinningCombinations() {
+    const combinations = [];
+
+    // Ajoutez les combinaisons horizontales
+    for (let i = 0; i < cells.length; i++) {
+      if (i % {{ object.gridsize }} <= {{ object.gridsize }} - {{ object.alignement }}) {
+        combinations.push(Array.from({ length: {{ object.alignement }} }, (_, index) => i + index));
+      }
+    }
+
+    // Ajoutez les combinaisons verticales
+    for (let i = 0; i < {{ object.gridsize }} * ({{ object.gridsize }} - {{ object.alignement }} + 1); i++) {
+      combinations.push(Array.from({ length: {{ object.alignement }} }, (_, index) => i + index * {{ object.gridsize }}));
+    }
+
+    // Ajoutez les combinaisons diagonales (\)
+    for (let i = 0; i <= {{ object.gridsize }} - {{ object.alignement }}; i++) {
+      for (let j = 0; j <= {{ object.gridsize }} - {{ object.alignement }}; j++) {
+        combinations.push(Array.from({ length: {{ object.alignement }} }, (_, index) => i + j * ({{ object.gridsize }} + 1) + index * ({{ object.gridsize }} + 1)));
+      }
+    }
+
+    // Ajoutez les combinaisons diagonales (/)
+    for (let i = 0; i <= {{ object.gridsize }} - {{ object.alignement }}; i++) {
+      for (let j = {{ object.alignement }} - 1; j < {{ object.gridsize }}; j++) {
+        combinations.push(Array.from({ length: {{ object.alignement }} }, (_, index) => i + j * ({{ object.gridsize }} - 1) + index * ({{ object.gridsize }} - 1)));
+      }
+    }
+
+    return combinations;
+  }
+    // Fonction pour vérifier si le tableau est complet (match nul)
+    function isBoardFull() {
+      return cells.every(cell => cell.textContent !== '');
+    }
+  });
+    $('.cell').on('click', function() {
+    const row = $(this).data('row');
+    const col = $(this).data('col');
+
+    $.ajax({
+        type: 'POST',
+        url: '{% url "make-move" pk=object.pk %}',
+        data: {
+            'row': row,
+            'col': col,
+            csrfmiddlewaretoken: '{{ csrf_token }}',
+        },
+        dataType: 'json',
+        success: function(response) {
+            // Traitement de la réponse JSON
+            if (response.success) {
+                alert(response.message);
+                // Ajoutez d'autres actions que vous souhaitez effectuer en cas de succès
+            } else {
+                alert('Échec du mouvement.');
+                // Ajoutez d'autres actions que vous souhaitez effectuer en cas d'échec
+            }
+        },
+        error: function() {
+            alert('Erreur lors de la requête AJAX.');
+        }
+    });
+    });
+</script>
+<div>
+    {% if object.gameover %}
+    <a class="btn btn-primary mt-3" href="{% url 'morpion-home' %}">Retourner à la page d'accueil</a>
+    {% endif %}
+</div>
+{% endblock content %}

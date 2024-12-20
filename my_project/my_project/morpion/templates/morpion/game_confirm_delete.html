@@ -1,0 +1,35 @@
+{% extends "morpion/base.html" %}
+{% block content %}
+<script>
+    $(document).ready(function () {
+        $('.col-md-4 .content-section').empty();
+        var profileImage = document.createElement("img");
+        profileImage.src = "{{ user.profile.image.url }}";
+        profileImage.alt = "{{ user.username }}";
+        profileImage.className = "img-fluid rounded-circle";
+        profileImage.style.maxWidth = "120px";
+        var usernameParagraph = document.createElement("h3");
+        usernameParagraph.textContent = "{{ user.username }}";
+
+        var profileSection = $('<div class="text-center"></div>');
+        profileSection.append(profileImage);
+        profileSection.append(usernameParagraph);
+
+        // Append the centered profile section to the content section
+        $('.col-md-4 .content-section').append(profileSection);
+    });
+</script>
+    <div class="content-section">
+        <form method="POST">
+            {% csrf_token %}
+            <fieldset class="form-group">
+                <legend class="border-bottom mb-4">Delete game</legend>
+                <h2>Etes-vous sûr de vouloir supprimer la partie "{{ object.title }}"?</h2>
+            </fieldset>
+            <div class="form-group">
+                <button class="btn btn-outline-danger" type="submit">Oui, supprimer</button>
+                <a class="btn btn-outline-secondary" href="{% url 'game-detail' object.id %}">Annuler</a>
+            </div>
+        </form>
+    </div>
+{% endblock content %}
